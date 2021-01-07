@@ -1,11 +1,6 @@
-### Package constants and cache
+### Package constants
+
+WRITTEN_QUESTIONS <- "https://writtenquestions-api.parliament.uk/api/writtenquestions/questions?expandMember=true"
+PARAMETER_TAKE_THRESHOLD <- "100000"
 
 library(magrittr)
-
-# API URL ---------------------------------------------------------------------
-
-WRITTEN_QUESTIONS <- "https://writtenquestions-api.parliament.uk/api/writtenquestions/questions"
-
-# Cache -----------------------------------------------------------------------
-
-cache <- new.env(parent = emptyenv())

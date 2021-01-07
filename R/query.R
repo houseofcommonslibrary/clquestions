@@ -1,7 +1,5 @@
 ### Functions for querying API data and processing data
 
-# Query ---------------------------------------------------------------------
-
 #' Send a query to API and return the response as a named list
 #'
 #' @param url The full API URL specifying the endpoint and request parameters.
@@ -21,6 +19,18 @@ fetch_query <- function(url) {
     # Convert response text to json
     response_json <- response_text %>%
         jsonlite::fromJSON(flatten = TRUE)
+
+    # Warn if the number of items available is greater than the maximum taken
+    if ("totalResults" %in% names(response_json)) {
+        if (response_json$totalResults > as.integer(PARAMETER_TAKE_THRESHOLD)) {
+            warning(stringr::str_c(
+                "The number of items available is greater than ",
+                "the maximum number of items taken."))
+        }
+    }
+
+    # Return
+    response_json
 }
 
 #' Get the data items from an API response as a tibble
