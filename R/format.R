@@ -12,7 +12,7 @@ format_variable_names <- function(results) {
 
     results <- results %>% dplyr::rename(
         question_links = .data$links,
-        question_id = .data$value_id,
+        question_answer_id = .data$value_id,
         question_member_mnis_id = .data$value_asking_member_id,
         question_house = .data$value_house,
         question_member_has_interest = .data$value_member_has_interest,
@@ -80,12 +80,12 @@ format_variable_names <- function(results) {
 #' @param results The tibble returned from \code{query_results}.
 #' @keywords internal
 
-format_variable_type <- function(results) {
+format_variable_types <- function(results) {
 
     # Character
     results <- results %>% dplyr::mutate(
         dplyr::across(
-            c(question_id,
+            c(question_answer_id,
               question_member_mnis_id,
               question_house,
               question_answer_uin,
@@ -131,35 +131,12 @@ format_variable_type <- function(results) {
                 as.character))
     }
 
-    # List -> character
-    results$question_is_grouped[lengths(results$question_is_grouped) == 0] <- NA_character_
-    results$question_is_grouped <- unlist(results$question_is_grouped)
-
     # List
     results <- results %>% dplyr::mutate(
         dplyr::across(
             c(question_links,
               answer_attachments),
             as.list))
-
-    # Date
-    results <- results %>% dplyr::mutate(
-        question_date = stringr::str_sub(.data$question_date, start = 1, end = 10),
-        answer_date_expected = stringr::str_sub(.data$answer_date_expected, start = 1, end = 10),
-        answer_date = stringr::str_sub(.data$answer_date, start = 1, end = 10),
-        answer_date_corrected = stringr::str_sub(.data$answer_date_corrected, start = 1, end = 10),
-        answer_date_holding = stringr::str_sub(.data$answer_date_holding, start = 1, end = 10))
-
-    # results$question_date <- lubridate::as_date(results$question_date)
-
-    # results <- results %>% dplyr::mutate(
-    #     dplyr::across(
-    #         c(question_date,
-    #           answer_date_expected,
-    #           answer_date,
-    #           answer_date_corrected,
-    #           answer_date_holding),
-    #         lubridate::as_date))
 
     # Logical
     results <- results %>% dplyr::mutate(
@@ -175,8 +152,21 @@ format_variable_type <- function(results) {
     results$answer_attachment_count <- as.integer(results$answer_attachment_count)
 
     # Empty string -> NA
+    results$question_is_grouped[lengths(results$question_is_grouped) == 0] <- NA_character_
     results[results == ""] <- NA
+
+
+    # As Date
+    results <- results %>% dplyr::mutate(
+        dplyr::across(
+            c(question_date,
+              answer_date_expected,
+              answer_date,
+              answer_date_corrected,
+              answer_date_holding),
+            as.Date))
 
     # Return
     results
 }
+

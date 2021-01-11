@@ -23,9 +23,9 @@ fetch_query <- function(url) {
     # Warn if the number of items available is greater than the maximum taken
     if ("totalResults" %in% names(response_json)) {
         if (response_json$totalResults > as.integer(PARAMETER_TAKE_THRESHOLD)) {
-            warning(stringr::str_c(
-                "The number of items available is greater than ",
-                "the maximum number of items taken."))
+            warning(stringr::str_glue(
+                "The number of items available ({response_json$totalResults}) ",
+                "is greater than the maximum number of items taken."))
         }
     }
 
