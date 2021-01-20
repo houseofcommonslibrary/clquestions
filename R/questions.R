@@ -1,5 +1,7 @@
 ### Functions for downloading written questions data
 
+# Raw functions ---------------------------------------------------------------
+
 #' Fetch data on written questions as a tibble using a written questions
 #' endpoint URL
 #'
@@ -9,38 +11,39 @@
 #' to the written questions endpoint with different URL parameters.
 #'
 #' @param url A valid URL requesting data from the written questions endpoint.
-#' @param summary A boolean indicating whether to exclude nested, empty and
-#'   duplicated columns. Variables expected to have high NA rates will also
-#'   be excluded. The default is TRUE.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
+#' @param take The number of items to take from the API.
 #' @keywords internal
 
-fetch_questions_from_url <- function(url, summary = TRUE) {
+fetch_questions_from_url <- function(url, summary = TRUE, take) {
 
     # Fetch the data
-    wq <- query_results(url)
+    wq <- query_results(url, take)
     if (nrow(wq) == 0) return(wq)
 
     # Format
     wq <- format_variable_names(wq)
     wq <- format_variable_types(wq)
 
-    # Summary if TRUE
     if (summary == TRUE) {
-        wq <- wq %>%
+        wq <- wq %>% dplyr::mutate(question_is_answered = dplyr:::if_else(
+            is.na(.data$answer_date) == TRUE, FALSE, TRUE)) %>%
             dplyr::select(
                 .data$question_answer_id,
                 .data$question_answer_uin,
                 .data$question_answer_subject,
-                .data$question_house,
+                .data$question_answer_house,
                 .data$question_date,
                 .data$question_text,
                 .data$question_is_named_day,
                 .data$question_is_withdrawn,
+                .data$question_is_answered,
+                .data$question_member_has_interest,
                 .data$question_member_mnis_id,
                 .data$question_member_name,
                 .data$question_member_party,
                 .data$question_member_constituency,
-                .data$answer_date_expected,
                 .data$answer_date,
                 .data$answer_text,
                 .data$answer_is_holding,
@@ -57,31 +60,45 @@ fetch_questions_from_url <- function(url, summary = TRUE) {
     wq
 }
 
-#' Fetch data on written questions
+# Main functions --------------------------------------------------------------
+
+#' Fetch data on written questions and answers by date tabled
 #'
-#' \code{fetch_written_questions} fetches data on written questions and
-#' returns it as a tibble containing one row per question.
+#' \code{fetch_written_questions} fetches data on written questions and answers
+#' returns it as a tibble containing one row per question/answer arranged by
+#' question date.
 #'
-#' By default this function returns a subset of the columns and ignores any
-#' nested and redundant columns. Set \code{summary = FALSE} when calling the
-#' function to retrieve the full data.
-#'
-#' @param summary A boolean indicating whether to exclude nested, empty and
-#'   duplicated columns. Variables expected to have high NA rates will also
-#'   be excluded. The default is TRUE.
-#' @param take An integer indicating the number of questions to take from
-#'   the API. By default the newest 1,000 questions are taken.
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param house A string indicating either the House of Commons or House of
+#'   Lords. Possible values include "c", "C", "Commons", "l", "L", "Lords".
+#'   The default value is NULL, which means results from both Houses are returned.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
 #' @export
 
 fetch_written_questions <- function(
-    question_from_date = NULL,
-    question_to_date = NULL,
-    question_on_date = NULL,
-    answer_from_date = NULL,
-    answer_to_date = NULL,
-    answer_on_date = NULL,
-    summary = TRUE,
-    take = 1000) {
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    house = NULL,
+    take = 1000,
+    summary = TRUE) {
+
+    # Set house if set
+    house <- set_house(house)
 
     # Set from_date and to_date to on_date if set
     if (!is.null(on_date)) {
@@ -95,44 +112,576 @@ fetch_written_questions <- function(
         # Fetch data for all written questions
         url <- stringr::str_glue(stringr::str_c(
             WQ_BASE_URL,
-            "&Take={take}",
+            "&take={take}",
+            "&house={house}",
             "&tabledWhenFrom={from_date}",
-            "&tableWhen"))
+            "&tabledWhenTo={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&answered=Any"))
     }
 
-
-
-    # Fetch data for all written questions
-    url <- stringr::str_glue(stringr::str_c(
-        WQ_BASE_URL,
-        "&Take={take}"))
-
-    fetch_questions_from_url(url, summary = summary)
+    # Return
+    fetch_questions_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$question_date)
 }
 
-#' Fetch data on Commons written questions
+#' Fetch data on written questions and answers by date answered
 #'
-#' \code{fetch_commons_wqs} fetches data on written questions from
-#' the House of Commons and returns it as a tibble containing one
-#' row per question.
+#' \code{fetch_written_answers} fetches data on written questions and answers
+#' returns it as a tibble containing one row per question/answer arranged by
+#' answer date.
 #'
-#' By default this function returns a subset of the columns and ignores any
-#' nested and redundant columns. Set \code{summary = FALSE} when calling the
-#' function to retrieve the full data.
-#'
-#' @param summary A boolean indicating whether to exclude nested, empty and
-#'   duplicated columns. Variables expected to have high NA rates will also
-#'   be excluded. The default is TRUE.
-#' @param take An integer indicating the number of questions to take from
-#'   the API. The default is 1,000.
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param house A string indicating either the House of Commons or House of
+#'   Lords. Possible values include "c", "C", "Commons", "l", "L", "Lords".
+#'  The default value is NULL, which means results from both Houses are returned.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
 #' @export
 
-fetch_commons_wqs <- function(summary = TRUE, take = 1000) {
+fetch_written_answers <- function(
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    house = NULL,
+    take = 1000,
+    summary = TRUE) {
 
-    # Fetch data for all written questions
-    url <- stringr::str_glue(stringr::str_c(
-        WQ_BASE_URL,
-        "&Take={take}"))
+    # Set house if set
+    house <- set_house(house)
 
-    fetch_questions_from_url(url, summary = summary)
+    # Set from_date and to_date to on_date if set
+    if (!is.null(on_date)) {
+        from_date <- on_date
+        to_date <- on_date
+    }
+
+    # Filter on dates if requested
+    if (!is.null(from_date) || !is.null(to_date)) {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&answeredWhenFrom={from_date}",
+            "&answeredWhenTo={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&answered=Answered"))
+    }
+
+    # Return
+    fetch_questions_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$answer_date)
 }
+
+#' Fetch data on written questions and answers by body and date tabled
+#'
+#' \code{fetch_written_questions_body} fetches data on written questions
+#' and answers returns it as a tibble containing one row per question/answer
+#' arranged by question date.
+#'
+#' @param body_id An integer representing the body responsible for answering
+#'   the written question.
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param house A string indicating either the House of Commons or House of
+#'   Lords. Possible values include "c", "C", "Commons", "l", "L", "Lords".
+#'   The default value is NULL, which means results from both Houses are returned.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
+#' @export
+
+fetch_written_questions_body <- function(
+    body_id = NULL,
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    house = NULL,
+    take = 1000,
+    summary = TRUE) {
+
+    # Check department ID provided
+    if (is.null(body_id)) stop(missing_argument("body_id"))
+    if (length(body_id) > 1) stop(multiple_ids("body"))
+
+    # Set house if set
+    house <- set_house(house)
+
+    # Set from_date and to_date to on_date if set
+    if (!is.null(on_date)) {
+        from_date <- on_date
+        to_date <- on_date
+    }
+
+    # Filter on dates if requested
+    if (!is.null(from_date) || !is.null(to_date)) {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&answeringBodies={body_id}",
+            "&tabledWhenFrom={from_date}",
+            "&tabledWhenTo={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&answeringBodies={body_id}",
+            "&answered=Any"))
+    }
+
+    # Return
+    fetch_questions_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$question_date)
+}
+
+#' Fetch data on written questions and answers by body and date answered
+#'
+#' \code{fetch_written_answers_body} fetches data on written questions
+#' and answers returns it as a tibble containing one row per question/answer
+#' arranged by answer date.
+#'
+#' @param body_id An integer representing the body responsible for answering
+#'   the written question.
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param house A string indicating either the House of Commons or House of
+#'   Lords. Possible values include "c", "C", "Commons", "l", "L", "Lords".
+#'   The default value is NULL, which means results from both Houses are returned.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
+#' @export
+
+fetch_written_answers_body <- function(
+    body_id = NULL,
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    house = NULL,
+    take = 1000,
+    summary = TRUE) {
+
+    # Check department ID provided
+    if (is.null(body_id)) stop(missing_argument("body_id"))
+    if (length(body_id) > 1) stop(multiple_ids("body"))
+
+    # Set house if set
+    house <- set_house(house)
+
+    # Set from_date and to_date to on_date if set
+    if (!is.null(on_date)) {
+        from_date <- on_date
+        to_date <- on_date
+    }
+
+    # Filter on dates if requested
+    if (!is.null(from_date) || !is.null(to_date)) {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&answeringBodies={body_id}",
+            "&answeredWhenFrom={from_date}",
+            "&answeredWhenTo={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&answeringBodies={body_id}",
+            "&answered=Answered"))
+    }
+
+    # Return
+    fetch_questions_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$answer_date)
+}
+
+
+#' Fetch data on written questions and answers by Member and date tabled
+#'
+#' \code{fetch_written_questions_member} fetches data on written questions
+#' and answers returns it as a tibble containing one row per question/answer
+#' arranged by question date.
+#'
+#' @param member_mnis_id An integer representing the MNIS ID for Commons and
+#'   Lords members.
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param house A string indicating either the House of Commons or House of
+#'   Lords. Possible values include "c", "C", "Commons", "l", "L", "Lords".
+#'   The default value is NULL, which means results from both Houses are returned.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
+#' @export
+
+fetch_written_questions_member <- function(
+    member_mnis_id = NULL,
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    house = NULL,
+    take = 1000,
+    summary = TRUE) {
+
+    # Check member ID provided
+    if (is.null(member_mnis_id)) stop(missing_argument("member_mnis_id"))
+    if (length(member_mnis_id) > 1) stop(multiple_ids("member"))
+
+    # Set house if set
+    house <- set_house(house)
+
+    # Set from_date and to_date to on_date if set
+    if (!is.null(on_date)) {
+        from_date <- on_date
+        to_date <- on_date
+    }
+
+    # Filter on dates if requested
+    if (!is.null(from_date) || !is.null(to_date)) {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&askingMemberId={member_mnis_id}",
+            "&tabledWhenFrom={from_date}",
+            "&tabledWhenTo={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&askingMemberId={member_mnis_id}",
+            "&answered=Any"))
+    }
+
+    # Return
+    fetch_questions_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$question_date)
+}
+
+#' Fetch data on written questions and answers by Member and date answered
+#'
+#' \code{fetch_written_questions_member} fetches data on written questions
+#' and answers returns it as a tibble containing one row per question/answer
+#' arranged by answer date.
+#'
+#' @param member_mnis_id An integer representing the Government body
+#'   responsible for answering the written question.
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param house A string indicating either the House of Commons or House of
+#'   Lords. Possible values include "c", "C", "Commons", "l", "L", "Lords".
+#'   The default value is NULL, which means results from both Houses are returned.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
+#' @export
+
+fetch_written_answers_member <- function(
+    department_id = NULL,
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    house = NULL,
+    take = 1000,
+    summary = TRUE) {
+
+    # Check member ID provided
+    if (is.null(member_mnis_id)) stop(missing_argument("member_mnis_id"))
+    if (length(member_mnis_id) > 1) stop(multiple_ids("member"))
+
+    # Set house if set
+    house <- set_house(house)
+
+    # Set from_date and to_date to on_date if set
+    if (!is.null(on_date)) {
+        from_date <- on_date
+        to_date <- on_date
+    }
+
+    # Filter on dates if requested
+    if (!is.null(from_date) || !is.null(to_date)) {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "answeringMemberId={member_mnis_id}",
+            "&answeredWhenFrom={from_date}",
+            "&answeredWhenTo={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "answeringMemberId={member_mnis_id}",
+            "&answered=Answered"))
+    }
+
+    # Return
+    fetch_questions_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$answer_date)
+}
+
+#' Fetch data on written questions and answers by search term and date tabled
+#'
+#' \code{fetch_written_questions_search} fetches data on written questions
+#' and answers returns it as a tibble containing one row per question/answer
+#' arranged by question date.
+#'
+#' @param search_term A string containing a single search term, e.g. "veterans".
+#'  It does not use boolean logic.
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param house A string indicating either the House of Commons or House of
+#'   Lords. Possible values include "c", "C", "Commons", "l", "L", "Lords".
+#'   The default value is NULL, which means results from both Houses are returned.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
+#' @export
+
+fetch_written_questions_search <- function(
+    search_term = NULL,
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    house = NULL,
+    take = 1000,
+    summary = TRUE) {
+
+    # Check member ID provided
+    if (is.null(search_term)) stop(missing_argument("search_term"))
+    if (length(search_term) > 1) stop(multiple_terms())
+
+    # Set house if set
+    house <- set_house(house)
+
+    # Set from_date and to_date to on_date if set
+    if (!is.null(on_date)) {
+        from_date <- on_date
+        to_date <- on_date
+    }
+
+    # Filter on dates if requested
+    if (!is.null(from_date) || !is.null(to_date)) {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&searchTerm={search_term}",
+            "&tabledWhenFrom={from_date}",
+            "&tabledWhenTo={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&searchTerm={search_term}",
+            "&answered=Any"))
+    }
+
+    # Return
+    fetch_questions_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$question_date)
+}
+
+#' Fetch data on written questions and answers by search term and date answered
+#'
+#' \code{fetch_written_questions_search} fetches data on written questions
+#' and answers returns it as a tibble containing one row per question/answer
+#' arranged by answer date.
+#'
+#' @param search_term A string containing a single search term, e.g. "veterans".
+#'  Does not use boolean logic.
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param house A string indicating either the House of Commons or House of
+#'   Lords. Possible values include "c", "C", "Commons", "l", "L", "Lords".
+#'   The default value is NULL, which means results from both Houses are returned.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
+#' @export
+
+fetch_written_answers_search <- function(
+    department_id = NULL,
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    house = NULL,
+    take = 1000,
+    summary = TRUE) {
+
+    # Check member ID provided
+    if (is.null(search_term)) stop(missing_argument("search_term"))
+    if (length(search_term) > 1) stop(multiple_terms())
+
+    # Set house if set
+    house <- set_house(house)
+
+    # Set from_date and to_date to on_date if set
+    if (!is.null(on_date)) {
+        from_date <- on_date
+        to_date <- on_date
+    }
+
+    # Filter on dates if requested
+    if (!is.null(from_date) || !is.null(to_date)) {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&searchTerm={search_term}",
+            "&answeredWhenFrom={from_date}",
+            "&answeredWhenTo={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            WQ_BASE_URL,
+            "&take={take}",
+            "&house={house}",
+            "&searchTerm={search_term}",
+            "&answered=Answered"))
+    }
+
+    # Return
+    fetch_questions_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$answer_date)
+}
+
+
+
+
+
+
+
+
+

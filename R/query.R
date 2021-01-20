@@ -3,9 +3,10 @@
 #' Send a query to API and return the response as a named list
 #'
 #' @param url The full API URL specifying the endpoint and request parameters.
+#' @param take The number of items to take from the API.
 #' @keywords internal
 
-fetch_query <- function(url) {
+fetch_query <- function(url, take) {
 
     # Get raw data from API endpoint
     response <- httr::GET(url)
@@ -22,7 +23,7 @@ fetch_query <- function(url) {
 
     # Warn if the number of items available is greater than the maximum taken
     if ("totalResults" %in% names(response_json)) {
-        if (response_json$totalResults > as.integer(PARAMETER_TAKE_THRESHOLD)) {
+        if (response_json$totalResults > take) {
             warning(stringr::str_glue(
                 "The number of items available ({response_json$totalResults}) ",
                 "is greater than the maximum number of items taken."))
@@ -51,8 +52,9 @@ get_response_items <- function(response) {
 #' results to a tibble, and cleans the column names.
 #'
 #' @param url The full API URL specifying the endpoint and request parameters.
+#' @param take The number of items to take from the API.
 #' @keywords internal
 
-query_results <- function(url) {
-    get_response_items(fetch_query(url))
+query_results <- function(url, take) {
+    get_response_items(fetch_query(url, take))
 }
