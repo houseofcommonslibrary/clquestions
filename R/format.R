@@ -37,15 +37,19 @@ format_variable_names <- function(results) {
         answer_date_holding = .data$value_date_holding_answer,
         answer_attachment_count = .data$value_attachment_count,
         answer_attachments = .data$value_attachments,
-        question_answer_subject = .data$value_heading,
-        question_member_mnis_id_2 = .data$value_asking_member_id_2,
-        question_member_list_as = .data$value_asking_member_list_as,
-        question_member_name = .data$value_asking_member_name,
-        question_member_party = .data$value_asking_member_party,
-        question_member_party_colour = .data$value_asking_member_party_colour,
-        question_member_party_abbreviation = .data$value_asking_member_party_abbreviation,
-        question_member_constituency = .data$value_asking_member_member_from,
-        question_member_thumbnail_url = .data$value_asking_member_thumbnail_url)
+        question_answer_subject = .data$value_heading)
+
+    if (all(is.na(results$question_member_mnis_id)) == FALSE) {
+        results <- results %>% dplyr::rename(
+            question_member_mnis_id_2 = .data$value_asking_member_id_2,
+            question_member_list_as = .data$value_asking_member_list_as,
+            question_member_name = .data$value_asking_member_name,
+            question_member_party = .data$value_asking_member_party,
+            question_member_party_colour = .data$value_asking_member_party_colour,
+            question_member_party_abbreviation = .data$value_asking_member_party_abbreviation,
+            question_member_constituency = .data$value_asking_member_member_from,
+            question_member_thumbnail_url = .data$value_asking_member_thumbnail_url)
+    }
 
     if (all(is.na(results$answer_member_mnis_id)) == FALSE) {
         results <- results %>% dplyr::rename(
@@ -109,6 +113,20 @@ format_variable_types <- function(results) {
               question_member_constituency,
               question_member_thumbnail_url),
             as.character))
+
+    if (all(is.na(results$question_member_mnis_id)) == FALSE) {
+        results <- results %>% dplyr::mutate(
+            dplyr::across(
+                c(question_member_mnis_id_2,
+                  question_member_list_as,
+                  question_member_name,
+                  question_member_party,
+                  question_member_party_colour,
+                  question_member_party_abbreviation,
+                  question_member_constituency,
+                  question_member_thumbnail_url),
+                as.character))
+    }
 
     if (all(is.na(results$answer_member_mnis_id)) == FALSE) {
         results <- results %>% dplyr::mutate(

@@ -2,7 +2,7 @@
 clquestions is an R package for downloading data from the UK Parliament's [Written Questions API](https://writtenquestions-api.parliament.uk/index.html). This package has been developed principally to support work on Parliamentary data in the House of Commons Library but it may be useful to other researchers working with this data. This package is still in active development and the API may evolve over time.
 
 ## Overview
-The package provides sets of functions for retrieving data from different endpoints of the written questions API and returning the data as a tibble. The package does not aim to exhaustively expose every possible API parameter, but is focussed on downloading key datasets than can be further explored, transformed and combined with other data in R. To help with using parts of the API that are not explicitly covered, the package also provides some lower level functions that allow you to retrieve data from the API with different parameters as native R data structures.
+The package provides sets of functions for retrieving data from different endpoints of the written questions API and returning the data as a tibble. The package does not aim to exhaustively expose every possible parameter of the API, but is focussed on downloading key datasets than can be further explored, transformed and combined with other data in R. To help with using parts of the API that are not explicitly covered, the package also provides some lower level functions that allow you to retrieve data from the API with different parameters as native R data structures.
 
 ## Installation
 Install from Github with using remotes.
@@ -136,3 +136,19 @@ Fetch a dataframe of key details about each written question and answer which co
 ```search_term``` A string containing a single search term, e.g. "veterans". It does not use boolean logic.
 
 This dataframe contains summary details for each written question and answer, such as the question/answer date, question/answer text and details on the member who asked/answered the question.
+
+---
+
+## Low level requests
+
+```r
+fetch_questions_from_url(url, summary = TRUE, take)
+```
+
+This is a low level function which fetches data on written questions from an
+endpoint URL and returns it as a tibble containing one row per question/answer.
+Users can construct their own queries using the parameters available on the [Written Questions API](https://writtenquestions-api.parliament.uk/index.html), specifically the `/api/writtenquestions/questions` endpoint.
+
+For example, 
+
+
