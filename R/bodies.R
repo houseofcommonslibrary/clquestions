@@ -3,7 +3,7 @@
 #' Return the ids and names of Parliamentary question answer bodies
 #'
 #' \code{get_answer_bodies} returns the ids and names of bodies responsible
-#' for answer Parliamentary questions.
+#' for answer Parliamentary questions. Correct as at 2021-01-26.
 #'
 #'  id      -- The unique id of an answer body
 #'  body    -- The name of an answer body

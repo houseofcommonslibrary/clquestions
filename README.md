@@ -137,18 +137,5 @@ Fetch a dataframe of key details about each written question and answer which co
 
 This dataframe contains summary details for each written question and answer, such as the question/answer date, question/answer text and details on the member who asked/answered the question.
 
----
-
-## Low level requests
-
-```r
-fetch_questions_from_url(url, summary = TRUE, take)
-```
-
-This is a low level function which fetches data on written questions from an
-endpoint URL and returns it as a tibble containing one row per question/answer.
-Users can construct their own queries using the parameters available on the [Written Questions API](https://writtenquestions-api.parliament.uk/index.html), specifically the `/api/writtenquestions/questions` endpoint.
-
-For example, 
 
 
