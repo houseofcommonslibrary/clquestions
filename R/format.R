@@ -1,14 +1,16 @@
 ### Functions for formatting columns and function arguments
 
-#' Rename variable names
+# Written questions -----------------------------------------------------------
+
+#' Rename written question variable names
 #'
-#' \code{format_variable_names} takes a tibble returned from \code{query_results}
+#' \code{format_wq_variable_names} takes a tibble returned from \code{query_results}
 #' and renames variables with meaningful descriptions.
 #'
 #' @param results The tibble returned from \code{query_results}.
 #' @keywords internal
 
-format_variable_names <- function(results) {
+format_wq_variable_names <- function(results) {
 
     results <- results %>% dplyr::rename(
         question_links = .data$links,
@@ -74,15 +76,15 @@ format_variable_names <- function(results) {
     results
 }
 
-#' Format variable type
+#' Format written question variable types
 #'
-#' \code{format_variable_type} takes a tibble returned from \code{query_results}
+#' \code{format_wq_variable_types} takes a tibble returned from \code{query_results}
 #' and specifies variable data types.
 #'
 #' @param results The tibble returned from \code{query_results}.
 #' @keywords internal
 
-format_variable_types <- function(results) {
+format_wq_variable_types <- function(results) {
 
     # Character
     results <- results %>% dplyr::mutate(
@@ -146,6 +148,8 @@ format_variable_types <- function(results) {
                 as.character))
     }
 
+    results <- results %>% dplyr::mutate_if(is.character, stringr::str_squish)
+
     # List
     results <- results %>% dplyr::mutate(
         dplyr::across(
@@ -183,6 +187,109 @@ format_variable_types <- function(results) {
     # Return
     results
 }
+
+# Written statements ----------------------------------------------------------
+
+#' Rename written statement variable names
+#'
+#' \code{format_ws_variable_names} takes a tibble returned from \code{query_results}
+#' and renames variables with meaningful descriptions.
+#'
+#' @param results The tibble returned from \code{query_results}.
+#' @keywords internal
+
+format_ws_variable_names <- function(results) {
+
+    results <- results %>% dplyr::rename(
+        statement_links = .data$links,
+        statement_id = .data$value_id,
+        statement_member_mnis_id = .data$value_member_id,
+        statement_member_role = .data$value_member_role,
+        statement_uin = .data$value_uin,
+        statement_date = .data$value_date_made,
+        statement_body_id = .data$value_answering_body_id,
+        statement_body_name = .data$value_answering_body_name,
+        statement_title = .data$value_title,
+        statement_text = .data$value_text,
+        statement_house = .data$value_house,
+        statement_notice_number = .data$value_notice_number,
+        statement_has_attachments = .data$value_has_attachments,
+        statement_has_linked_statements = .data$value_has_linked_statements,
+        statement_linked_statements = .data$value_linked_statements,
+        statement_attachments = .data$value_attachments,
+        statement_member_mnis_id_2 = .data$value_member_id_2,
+        statement_member_list_as = .data$value_member_list_as,
+        statement_member_name = .data$value_member_name,
+        statement_member_party = .data$value_member_party,
+        statement_member_party_colour = .data$value_member_party_colour,
+        statement_member_party_abbreviation = .data$value_member_party_abbreviation,
+        statement_member_constituency = .data$value_member_member_from,
+        statement_member_thumbnail_url = .data$value_member_thumbnail_url)
+
+    results
+}
+
+#' Format written statement variable types
+#'
+#' \code{format_ws_variable_types} takes a tibble returned from \code{query_results}
+#' and specifies variable data types.
+#'
+#' @param results The tibble returned from \code{query_results}.
+#' @keywords internal
+
+format_ws_variable_types <- function(results) {
+
+    # Character
+    results <- results %>% dplyr::mutate(
+        dplyr::across(
+            c(statement_id,
+              statement_member_mnis_id,
+              statement_member_role,
+              statement_uin,
+              statement_body_id,
+              statement_body_name,
+              statement_title,
+              statement_text,
+              statement_house,
+              statement_notice_number,
+              statement_member_mnis_id_2,
+              statement_member_list_as,
+              statement_member_name,
+              statement_member_party,
+              statement_member_party_colour,
+              statement_member_party_abbreviation,
+              statement_member_constituency,
+              statement_member_thumbnail_url),
+            as.character))
+
+    results <- results %>% dplyr::mutate_if(is.character, stringr::str_squish)
+
+    # List
+    results <- results %>% dplyr::mutate(
+        dplyr::across(
+            c(statement_links,
+              statement_attachments),
+            as.list))
+
+    # Logical
+    results <- results %>% dplyr::mutate(
+        dplyr::across(
+            c(statement_has_attachments,
+              statement_has_linked_statements),
+            as.logical))
+
+    # # Empty string -> NA
+    # results$statement_linked_statements[lengths(results$statement_linked_statements) == 0] <- NA_character_
+    # results[results == ""] <- NA
+
+    # As Date
+    results$statement_date <- as.Date(results$statement_date)
+
+    # Return
+    results
+}
+
+# Set house parameter ---------------------------------------------------------
 
 #' Set house argument based on input
 #'

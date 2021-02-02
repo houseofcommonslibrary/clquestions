@@ -6,7 +6,7 @@
 #' @param take The number of items to take from the API.
 #' @keywords internal
 
-fetch_query <- function(url, take) {
+fetch_query <- function(url, take, warning = FALSE) {
 
     # Get raw data from API endpoint
     response <- httr::GET(url)
@@ -21,12 +21,14 @@ fetch_query <- function(url, take) {
     response_json <- response_text %>%
         jsonlite::fromJSON(flatten = TRUE)
 
-    # Warn if the number of items available is greater than the maximum taken
-    if ("totalResults" %in% names(response_json)) {
-        if (response_json$totalResults > take) {
-            warning(stringr::str_glue(
-                "The number of items available ({response_json$totalResults}) ",
-                "is greater than the maximum number of items taken."))
+    if (warning == TRUE) {
+        # Warn if the number of items available is greater than the maximum taken
+        if ("totalResults" %in% names(response_json)) {
+            if (response_json$totalResults > take) {
+                warning(stringr::str_glue(
+                    "The number of items available ({response_json$totalResults}) ",
+                    "is greater than the number of items taken."))
+            }
         }
     }
 
@@ -56,5 +58,5 @@ get_response_items <- function(response) {
 #' @keywords internal
 
 query_results <- function(url, take) {
-    get_response_items(fetch_query(url, take))
+    get_response_items(fetch_query(url, take, warning = FALSE))
 }

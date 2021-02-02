@@ -18,13 +18,16 @@
 
 fetch_questions_from_url <- function(url, summary = TRUE, take) {
 
+    # Check if take is less than available
+    fetch_query(url, take, warning = TRUE)
+
     # Fetch the data
     wq <- query_results(url, take)
     if (nrow(wq) == 0) return(wq)
 
     # Format
-    wq <- format_variable_names(wq)
-    wq <- format_variable_types(wq)
+    wq <- format_wq_variable_names(wq)
+    wq <- format_wq_variable_types(wq)
 
     if (summary == TRUE) {
         wq <- wq %>% dplyr::mutate(question_is_answered = dplyr:::if_else(
@@ -134,7 +137,7 @@ fetch_written_questions <- function(
 
 #' Fetch data on written questions and answers by date answered
 #'
-#' \code{fetch_written_answers} fetches data on written questions and answers
+#' \code{fetch_written_answers} fetches data on written questions and answers and
 #' returns it as a tibble containing one row per question/answer arranged by
 #' answer date.
 #'
@@ -205,7 +208,7 @@ fetch_written_answers <- function(
 #' Fetch data on written questions and answers by body and date tabled
 #'
 #' \code{fetch_written_questions_body} fetches data on written questions
-#' and answers returns it as a tibble containing one row per question/answer
+#' and answers and returns it as a tibble containing one row per question/answer
 #' arranged by question date.
 #'
 #' @param body_id An integer representing the body responsible for answering
@@ -284,7 +287,7 @@ fetch_written_questions_body <- function(
 #' Fetch data on written questions and answers by body and date answered
 #'
 #' \code{fetch_written_answers_body} fetches data on written questions
-#' and answers returns it as a tibble containing one row per question/answer
+#' and answers and returns it as a tibble containing one row per question/answer
 #' arranged by answer date.
 #'
 #' @param body_id An integer representing the body responsible for answering
@@ -364,7 +367,7 @@ fetch_written_answers_body <- function(
 #' Fetch data on written questions and answers by Member and date tabled
 #'
 #' \code{fetch_written_questions_member} fetches data on written questions
-#' and answers returns it as a tibble containing one row per question/answer
+#' and answers and returns it as a tibble containing one row per question/answer
 #' arranged by question date.
 #'
 #' @param member_mnis_id An integer representing the MNIS ID for Commons and
@@ -442,8 +445,8 @@ fetch_written_questions_member <- function(
 
 #' Fetch data on written questions and answers by Member and date answered
 #'
-#' \code{fetch_written_questions_member} fetches data on written questions
-#' and answers returns it as a tibble containing one row per question/answer
+#' \code{fetch_written_answers_member} fetches data on written questions
+#' and answers and returns it as a tibble containing one row per question/answer
 #' arranged by answer date.
 #'
 #' @param member_mnis_id An integer representing the Government body
@@ -522,7 +525,7 @@ fetch_written_answers_member <- function(
 #' Fetch data on written questions and answers by search term and date tabled
 #'
 #' \code{fetch_written_questions_search} fetches data on written questions
-#' and answers returns it as a tibble containing one row per question/answer
+#' and answers and returns it as a tibble containing one row per question/answer
 #' arranged by question date.
 #'
 #' @param search_term A string containing a single search term, e.g. "veterans".
@@ -557,7 +560,7 @@ fetch_written_questions_search <- function(
     take = 1000,
     summary = TRUE) {
 
-    # Check member ID provided
+    # Check search term
     if (is.null(search_term)) stop(missing_argument("search_term"))
     if (length(search_term) > 1) stop(multiple_terms())
 
@@ -600,8 +603,8 @@ fetch_written_questions_search <- function(
 
 #' Fetch data on written questions and answers by search term and date answered
 #'
-#' \code{fetch_written_questions_search} fetches data on written questions
-#' and answers returns it as a tibble containing one row per question/answer
+#' \code{fetch_written_answers_search} fetches data on written questions
+#' and answers and returns it as a tibble containing one row per question/answer
 #' arranged by answer date.
 #'
 #' @param search_term A string containing a single search term, e.g. "veterans".
@@ -636,7 +639,7 @@ fetch_written_answers_search <- function(
     take = 1000,
     summary = TRUE) {
 
-    # Check member ID provided
+    # Check search term
     if (is.null(search_term)) stop(missing_argument("search_term"))
     if (length(search_term) > 1) stop(multiple_terms())
 
