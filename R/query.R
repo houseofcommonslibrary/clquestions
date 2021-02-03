@@ -2,11 +2,13 @@
 
 #' Send a query to API and return the response as a named list
 #'
+#' \code{query} makes an API call to the given endpoint.
+#'
 #' @param url The full API URL specifying the endpoint and request parameters.
 #' @param take The number of items to take from the API.
 #' @keywords internal
 
-fetch_query <- function(url, take, warning = FALSE) {
+query <- function(url, take = NULL, warning = FALSE) {
 
     # Get raw data from API endpoint
     response <- httr::GET(url)
@@ -38,7 +40,10 @@ fetch_query <- function(url, take, warning = FALSE) {
 
 #' Get the data items from an API response as a tibble
 #'
-#' @param response The response returned from a call to \code{fetch_query}.
+#' \code{get_response_items} converts the response returned from \code{query}
+#' to a tibble, and cleans the column names.
+#'
+#' @param response The response returned from a call to \code{query}.
 #' @keywords internal
 
 get_response_items <- function(response) {
@@ -50,13 +55,25 @@ get_response_items <- function(response) {
 
 #' Send a query to API and return the result items as a tibble
 #'
-#' \code{query_results} makes an API call to the given endpoint, converts the
+#' \code{fetch_query} makes an API call to the given endpoint, converts the
 #' results to a tibble, and cleans the column names.
 #'
 #' @param url The full API URL specifying the endpoint and request parameters.
 #' @param take The number of items to take from the API.
 #' @keywords internal
 
-query_results <- function(url, take) {
-    get_response_items(fetch_query(url, take, warning = FALSE))
+fetch_query <- function(url, take) {
+    get_response_items(query(url, take, warning = FALSE))
+}
+
+#' Send a query to API and return the result items as a tibble
+#'
+#' \code{fetch_raw_query} makes an API call to the given endpoint, converts the
+#' results to a tibble, and cleans the column names.
+#'
+#' @param url The full API URL specifying the endpoint and request parameters.
+#' @keywords internal
+
+fetch_raw_query <- function(url) {
+    get_response_items(query(url, warning = FALSE))
 }

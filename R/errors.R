@@ -47,3 +47,4 @@ multiple_terms <- function() {
     stringr::str_glue(
         "Multiple search terms have been supplied. Only one term is allowed.")
 }
+
