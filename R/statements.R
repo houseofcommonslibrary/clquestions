@@ -117,6 +117,16 @@ fetch_written_statements <- function(
     # Set house if set
     house <- set_house(house)
 
+    # Check date format
+    from_date <- handle_date(from_date)
+    to_date <- handle_date(to_date)
+    on_date <- handle_date(on_date)
+
+    # Check from date is before to date
+    if ((!is.null(from_date)) && (!is.null(to_date)) && (from_date > to_date)) {
+        stop("to_date is before from_date")
+    }
+
     # Set from_date and to_date to on_date if set
     if (!is.null(on_date)) {
         from_date <- on_date
@@ -192,6 +202,16 @@ fetch_written_statements_body <- function(
 
     # Set house if set
     house <- set_house(house)
+
+    # Check date format
+    from_date <- handle_date(from_date)
+    to_date <- handle_date(to_date)
+    on_date <- handle_date(on_date)
+
+    # Check from date is before to date
+    if ((!is.null(from_date)) && (!is.null(to_date)) && (from_date > to_date)) {
+        stop("to_date is before from_date")
+    }
 
     # Set from_date and to_date to on_date if set
     if (!is.null(on_date)) {
@@ -270,6 +290,16 @@ fetch_written_statements_member <- function(
 
     # Set house if set
     house <- set_house(house)
+
+    # Check date format
+    from_date <- handle_date(from_date)
+    to_date <- handle_date(to_date)
+    on_date <- handle_date(on_date)
+
+    # Check from date is before to date
+    if ((!is.null(from_date)) && (!is.null(to_date)) && (from_date > to_date)) {
+        stop("to_date is before from_date")
+    }
 
     # Set from_date and to_date to on_date if set
     if (!is.null(on_date)) {

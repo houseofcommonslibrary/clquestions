@@ -1,4 +1,4 @@
-### Record and retrieve test data: committee functions
+### Record and retrieve test data: questions
 
 # About -----------------------------------------------------------------------
 
@@ -22,14 +22,14 @@ fetch_questions_data <- function() {
 
     url_questions <- stringr::str_glue(stringr::str_c(
         WQ_BASE_URL,
-        "&take={TAKE}",
+        "&take={TAKE_QUESTIONS}",
         "&house={HOUSE}",
         "&tabledWhenFrom={QUESTION_DATE}",
         "&tabledWhenTo={QUESTION_DATE}"))
 
     url_questions_body <- stringr::str_glue(stringr::str_c(
         WQ_BASE_URL,
-        "&take={TAKE}",
+        "&take={TAKE_QUESTIONS}",
         "&house={HOUSE}",
         "&answeringBodies={ANSWER_BODY}",
         "&tabledWhenFrom={QUESTION_DATE}",
@@ -37,7 +37,7 @@ fetch_questions_data <- function() {
 
     url_questions_member <- stringr::str_glue(stringr::str_c(
         WQ_BASE_URL,
-        "&take={TAKE}",
+        "&take={TAKE_QUESTIONS}",
         "&house={HOUSE}",
         "&askingMemberId={QUESTION_MEMBER}",
         "&tabledWhenFrom={QUESTION_DATE}",
@@ -45,14 +45,14 @@ fetch_questions_data <- function() {
 
     url_answers <- stringr::str_glue(stringr::str_c(
         WQ_BASE_URL,
-        "&take={TAKE}",
+        "&take={TAKE_QUESTIONS}",
         "&house={HOUSE}",
         "&answeredWhenFrom={ANSWER_DATE}",
         "&answeredWhenTo={ANSWER_DATE}"))
 
     url_answers_body <- stringr::str_glue(stringr::str_c(
         WQ_BASE_URL,
-        "&take={TAKE}",
+        "&take={TAKE_QUESTIONS}",
         "&house={HOUSE}",
         "&answeringBodies={ANSWER_BODY}",
         "&answeredWhenFrom={ANSWER_DATE}",
@@ -60,9 +60,9 @@ fetch_questions_data <- function() {
 
     url_answers_member <- stringr::str_glue(stringr::str_c(
         WQ_BASE_URL,
-        "&take={TAKE}",
+        "&take={TAKE_QUESTIONS}",
         "&house={HOUSE}",
-        "answeringMemberId={ANSWER_MEMBER}",
+        "&answeringMemberId={ANSWER_MEMBER}",
         "&answeredWhenFrom={ANSWER_DATE}",
         "&answeredWhenTo={ANSWER_DATE}"))
 

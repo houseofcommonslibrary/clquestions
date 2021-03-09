@@ -1,4 +1,4 @@
-### Functions for filtering dates
+### Functions for dates
 
 #' Take a date which may be a string or a date and returns a date.
 #'

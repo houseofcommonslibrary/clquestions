@@ -31,6 +31,7 @@ qa_query_cols <- c(
     "value_attachment_count",
     "value_heading",
     "value_attachments",
+    "value_grouped_questions_dates", # Added 2021-03-09
     "value_asking_member_id_2",
     "value_asking_member_list_as",
     "value_asking_member_name",
@@ -83,22 +84,22 @@ test_that("query_results sends and recieves basic written question and answer qu
     response <- httr::GET(WQ_BASE_URL)
     response_text <- httr::content(response, as = "text", encoding = "utf-8")
     response_text <- response_text %>% jsonlite::fromJSON(flatten = TRUE)
-    response_results <- response$results %>%
+    response_results <- response_text$results %>%
         tibble::as_tibble() %>%
         janitor::clean_names()
 
     expect_equal(response$status_code, 200)
-    expect_equal(ncol(response_results), 44)
+    expect_equal(ncol(response_results), 45)
     expect_equal(colnames(response_results), qa_query_cols)
 })
 
-test_that("query_results sends and recieves basic Lords division query", {
+test_that("query_results sends and recieves basic statements query", {
 
     # Fetch data
     response <- httr::GET(WS_BASE_URL)
     response_text <- httr::content(response, as = "text", encoding = "utf-8")
     response_text <- response_text %>% jsonlite::fromJSON(flatten = TRUE)
-    response_results <- response$results %>%
+    response_results <- response_text$results %>%
         tibble::as_tibble() %>%
         janitor::clean_names()
 

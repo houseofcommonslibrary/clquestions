@@ -20,13 +20,14 @@ ANSWER_DATE <- "2021-02-01"
 QUESTION_MEMBER <- 4651 # Dan Carden
 ANSWER_MEMBER <- 4485 # Johnny Mercer
 ANSWER_BODY <- 11 # Ministry of Defence
+TAKE_QUESTIONS <- 1000
 
 # Written statements
 STATEMENT_DATE <- "2021-02-01"
 STATEMENT_MEMBER <- 4066 # Priti Patel
 STATEMENT_BODY <- 1 # Home Office
+TAKE_STATEMENTS <- 20
 
-TAKE <- 1000
 HOUSE <- "Bicameral"
 
 # Read and write data ---------------------------------------------------------
