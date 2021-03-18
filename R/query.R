@@ -11,7 +11,7 @@
 query <- function(url, take = NULL, warning = FALSE) {
 
     # Get raw data from API endpoint
-    response <- httr::GET(url)
+    response <- httr::GET(url, timeout = 5000000)
 
     # Parse response text
     response_text <- httr::content(response, as = "text", encoding = "utf-8")
