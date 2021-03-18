@@ -40,7 +40,7 @@ the API. By default the most recent 1,000 records are taken.}
 columns in the results. The default is TRUE.}
 }
 \description{
-\code{fetch_written_answers} fetches data on written questions and answers
+\code{fetch_written_answers} fetches data on written questions and answers and
 returns it as a tibble containing one row per question/answer arranged by
 answer date.
 }

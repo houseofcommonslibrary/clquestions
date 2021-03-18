@@ -7,9 +7,10 @@
 get_response_items(response)
 }
 \arguments{
-\item{response}{The response returned from a call to \code{fetch_query}.}
+\item{response}{The response returned from a call to \code{query}.}
 }
 \description{
-Get the data items from an API response as a tibble
+\code{get_response_items} converts the response returned from \code{query}
+to a tibble, and cleans the column names.
 }
 \keyword{internal}

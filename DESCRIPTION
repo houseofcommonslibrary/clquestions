@@ -17,15 +17,19 @@ License: WBSD_3_clause + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
-    httr,
-    jsonlite,
-    tibble,
-    purrr,
     dplyr,
-    magrittr,
-    stringr,
-    janitor,
-    tidyr
+	httr,
+	jsonlite,
+	magrittr,
+	purrr,
+	readr,
+	rlang,
+	lubridate,
+	tidyr,
+	stringr,
+	tibble,
+	data.table,
+	janitor
 RoxygenNote: 7.1.1
 Suggests: 
     testthat

@@ -5,7 +5,7 @@
 \title{Fetch data on written questions and answers by Member and date answered}
 \usage{
 fetch_written_answers_member(
-  department_id = NULL,
+  member_mnis_id = NULL,
   from_date = NULL,
   to_date = NULL,
   on_date = NULL,
@@ -15,6 +15,9 @@ fetch_written_answers_member(
 )
 }
 \arguments{
+\item{member_mnis_id}{An integer representing the Government body
+responsible for answering the written question.}
+
 \item{from_date}{A string or Date representing a date. If a string is used
 it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
 default value is NULL, which means no records are excluded on the basis of
@@ -39,12 +42,9 @@ the API. By default the most recent 1,000 records are taken.}
 
 \item{summary}{A boolean indicating whether to exclude nested and empty
 columns in the results. The default is TRUE.}
-
-\item{member_mnis_id}{An integer representing the Government body
-responsible for answering the written question.}
 }
 \description{
-\code{fetch_written_questions_member} fetches data on written questions
-and answers returns it as a tibble containing one row per question/answer
+\code{fetch_written_answers_member} fetches data on written questions
+and answers and returns it as a tibble containing one row per question/answer
 arranged by answer date.
 }

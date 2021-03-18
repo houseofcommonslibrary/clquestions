@@ -45,6 +45,6 @@ columns in the results. The default is TRUE.}
 }
 \description{
 \code{fetch_written_answers_body} fetches data on written questions
-and answers returns it as a tibble containing one row per question/answer
+and answers and returns it as a tibble containing one row per question/answer
 arranged by answer date.
 }
