@@ -29,10 +29,35 @@ fetch_questions_from_url <- function(url, summary = TRUE, take) {
     wq <- format_wq_variable_names(wq)
     wq <- format_wq_variable_types(wq)
 
+    # Is question answered
+    wq <- wq %>% dplyr::mutate(question_is_answered = dplyr::if_else(
+        is.na(.data$answer_date) == TRUE, FALSE, TRUE))
+
     if (summary == TRUE) {
-        wq <- wq %>% dplyr::mutate(question_is_answered = dplyr:::if_else(
-            is.na(.data$answer_date) == TRUE, FALSE, TRUE)) %>%
-            dplyr::select(
+        if (sum(wq$question_is_answered) == 0) {
+            wq <- wq %>% dplyr::select(
+                .data$question_answer_id,
+                .data$question_answer_uin,
+                .data$question_answer_subject,
+                .data$question_answer_house,
+                .data$question_date,
+                .data$question_text,
+                .data$question_is_named_day,
+                .data$question_is_withdrawn,
+                .data$question_is_answered,
+                .data$question_member_has_interest,
+                .data$question_member_mnis_id,
+                .data$question_member_name,
+                .data$question_member_party,
+                .data$question_member_constituency,
+                .data$answer_date,
+                .data$answer_text,
+                .data$answer_is_holding,
+                .data$answer_is_correction,
+                .data$answer_body_id,
+                .data$answer_body_name)
+        } else {
+            wq <- wq %>% dplyr::select(
                 .data$question_answer_id,
                 .data$question_answer_uin,
                 .data$question_answer_subject,
@@ -57,6 +82,7 @@ fetch_questions_from_url <- function(url, summary = TRUE, take) {
                 .data$answer_member_name,
                 .data$answer_member_party,
                 .data$answer_member_constituency)
+        }
     }
 
     # Return
