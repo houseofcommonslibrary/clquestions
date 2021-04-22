@@ -2,9 +2,9 @@
 
 # Questions
 WQ_BASE_URL <- "https://writtenquestions-api.parliament.uk/api/writtenquestions/questions?expandMember=true"
-OQ_BASE_URL <- ""
+OQ_BASE_URL <- "https://oralquestionsandmotions-api.parliament.uk/oralquestions/list?parameters"
 
-# Statements and EDMs
+# Statements
 WS_BASE_URL <- "https://writtenquestions-api.parliament.uk/api/writtenstatements/statements?expandMember=true"
 
 library(magrittr)

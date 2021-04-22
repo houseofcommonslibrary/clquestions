@@ -4,10 +4,10 @@
 
 #' Rename written question variable names
 #'
-#' \code{format_wq_variable_names} takes a tibble returned from \code{query_results}
+#' \code{format_wq_variable_names} takes a tibble returned from \code{fetch_query}
 #' and renames variables with meaningful descriptions.
 #'
-#' @param results The tibble returned from \code{query_results}.
+#' @param results The tibble returned from \code{fetch_query}.
 #' @keywords internal
 
 format_wq_variable_names <- function(results) {
@@ -78,10 +78,10 @@ format_wq_variable_names <- function(results) {
 
 #' Format written question variable types
 #'
-#' \code{format_wq_variable_types} takes a tibble returned from \code{query_results}
+#' \code{format_wq_variable_types} takes a tibble returned from \code{fetch_query}
 #' and specifies variable data types.
 #'
-#' @param results The tibble returned from \code{query_results}.
+#' @param results The tibble returned from \code{fetch_query}.
 #' @keywords internal
 
 format_wq_variable_types <- function(results) {
@@ -192,10 +192,10 @@ format_wq_variable_types <- function(results) {
 
 #' Rename written statement variable names
 #'
-#' \code{format_ws_variable_names} takes a tibble returned from \code{query_results}
+#' \code{format_ws_variable_names} takes a tibble returned from \code{process_pagination}
 #' and renames variables with meaningful descriptions.
 #'
-#' @param results The tibble returned from \code{query_results}.
+#' @param results The tibble returned from \code{process_pagination}.
 #' @keywords internal
 
 format_ws_variable_names <- function(results) {
@@ -231,10 +231,10 @@ format_ws_variable_names <- function(results) {
 
 #' Format written statement variable types
 #'
-#' \code{format_ws_variable_types} takes a tibble returned from \code{query_results}
+#' \code{format_ws_variable_types} takes a tibble returned from \code{process_pagination}
 #' and specifies variable data types.
 #'
-#' @param results The tibble returned from \code{query_results}.
+#' @param results The tibble returned from \code{process_pagination}.
 #' @keywords internal
 
 format_ws_variable_types <- function(results) {
@@ -284,6 +284,103 @@ format_ws_variable_types <- function(results) {
 
     # As Date
     results$statement_date <- as.Date(results$statement_date)
+
+    # Return
+    results
+}
+
+# Oral questions --------------------------------------------------------------
+
+#' Format oral question variable names
+#'
+#' \code{format_oq_variable_names} takes a tibble returned from \code{process_oral_pagination}
+#' and specifies variable data names.
+#'
+#' @param results The tibble returned from \code{process_oral_pagination}.
+#' @keywords internal
+
+format_oq_variable_names <- function(results) {
+
+    results <- results %>% dplyr::rename(
+        question_id = .data$id,
+        question_type = .data$question_type,
+        question_text = .data$question_text,
+        question_status = .data$status,
+        question_number = .data$number,
+        question_date = .data$tabled_when,
+        question_to_be_asked_when = .data$removed_from_to_be_asked_when,
+        question_declarable_interest = .data$declarable_interest_detail,
+        question_link = .data$hansard_link,
+        question_uin = .data$uin,
+        question_answer_date = .data$answering_when,
+        question_answer_body_id = .data$answering_body_id,
+        question_answer_body = .data$answering_body,
+        question_answer_minister_title = .data$answering_minister_title,
+        question_answer_minister = .data$answering_minister,
+        question_member_id = .data$asking_member_id,
+        question_answer_member_id = .data$answering_minister_id,
+        question_member_mnis_id = .data$asking_member_mnis_id,
+        question_member_pims_id = .data$asking_member_pims_id,
+        question_member_name = .data$asking_member_name,
+        question_member_list_as = .data$asking_member_list_as,
+        question_member_constituency = .data$asking_member_constituency,
+        question_member_status = .data$asking_member_status,
+        question_member_party = .data$asking_member_party,
+        question_member_party_id = .data$asking_member_party_id,
+        question_member_party_colour = .data$asking_member_party_colour,
+        question_member_photo_url = .data$asking_member_photo_url)
+
+    results
+}
+
+#' Format oral question variable types
+#'
+#' \code{format_oq_variable_types} takes a tibble returned from \code{process_oral_pagination}
+#' and specifies variable data types.
+#'
+#' @param results The tibble returned from \code{process_oral_pagination}.
+#' @keywords internal
+
+format_oq_variable_types <- function(results) {
+
+    # Character
+    results <- results %>% dplyr::mutate(
+        dplyr::across(
+            c(question_id,
+              question_type,
+              question_text,
+              question_status,
+              question_number,
+              question_declarable_interest,
+              question_link,
+              question_uin,
+              question_answer_body_id,
+              question_answer_body,
+              question_answer_minister_title,
+              question_answer_minister,
+              question_member_id,
+              question_answer_member_id,
+              question_member_mnis_id,
+              question_member_pims_id,
+              question_member_name,
+              question_member_list_as,
+              question_member_constituency,
+              question_member_status,
+              question_member_party,
+              question_member_party_id,
+              question_member_party_colour,
+              question_member_photo_url),
+            as.character))
+
+    results <- results %>% dplyr::mutate_if(is.character, stringr::str_squish)
+
+    # As Date
+    results <- results %>% dplyr::mutate(
+        dplyr::across(
+            c(question_date,
+              question_to_be_asked_when,
+              question_answer_date),
+            as.Date))
 
     # Return
     results
