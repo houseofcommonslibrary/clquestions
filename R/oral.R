@@ -71,7 +71,7 @@ process_oral_pagination <- function(url, take) {
     if (take <= 25) {
 
         results <- fetch_oral_query(
-            stringr::str_glue("{url}.take={take}"), take)
+            stringr::str_glue("{url}&parameters.take={take}"), take)
 
     } else {
 
@@ -81,7 +81,7 @@ process_oral_pagination <- function(url, take) {
         # Map pagination
         results <- purrr::map_df(skip_amount, function(amount) {
             fetch_oral_query(
-                stringr::str_glue("{url}.skip={amount}"), take)
+                stringr::str_glue("{url}&parameters.skip={amount}"), take)
         })
     }
     results
@@ -132,9 +132,84 @@ fetch_oral_from_url <- function(url, summary = TRUE, take) {
             .data$question_answer_body_name,
             .data$question_answer_member_id,
             .data$question_answer_minister_title,
-            .data$question_answer_minister)
+            .data$question_answer_minister_name)
     }
 
     # Return
     oq
 }
+
+# Main functions --------------------------------------------------------------
+
+# NOT WORKING AS EXPECTED -- SET TO INTERNAL --
+
+#' Fetch data on oral questions by answering date
+#'
+#' \code{fetch_oral_questions} fetches data on oral questions and
+#' and asnwers and returns it as a tibble containing one row per question
+#' arranged by answer date.
+#'
+#' @param from_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the from_date.
+#' @param to_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the to_date.
+#' @param on_date A string or Date representing a date. If a string is used
+#'   it should specify the date in ISO 8601 date format e.g. '2000-12-31'. The
+#'   default value is NULL, which means no records are excluded on the basis of
+#'   the on_date.
+#' @param take An integer indicating the number of records to take from
+#'   the API. By default the most recent 1,000 records are taken.
+#' @param summary A boolean indicating whether to exclude nested and empty
+#'   columns in the results. The default is TRUE.
+#' @internal
+fetch_oral_questions <- function(
+    from_date = NULL,
+    to_date = NULL,
+    on_date = NULL,
+    take = 1000,
+    summary = TRUE) {
+
+    # Check date format
+    from_date <- handle_date(from_date)
+    to_date <- handle_date(to_date)
+    on_date <- handle_date(on_date)
+
+    # Check from date is before to date
+    if ((!is.null(from_date)) && (!is.null(to_date)) && (from_date > to_date)) {
+        stop("to_date is before from_date")
+    }
+
+    # Set from_date and to_date to on_date if set
+    if (!is.null(on_date)) {
+        from_date <- on_date
+        to_date <- on_date
+    }
+
+    # Filter on dates if requested
+    if (!is.null(from_date) || !is.null(to_date)) {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            OQ_BASE_URL,
+            "parameters.take={take}",
+            "&parameters.answeringDateStart={from_date}",
+            "&parameters.answeringDateEnd={to_date}"))
+
+    } else {
+
+        # Fetch data for all written questions
+        url <- stringr::str_glue(stringr::str_c(
+            OQ_BASE_URL,
+            "parameters.take={take}"))
+    }
+
+    # Return
+    fetch_oral_from_url(url, summary, take) %>%
+        dplyr::arrange(.data$question_answer_date)
+
+}
+
